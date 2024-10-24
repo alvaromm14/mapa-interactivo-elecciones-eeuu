@@ -1,0 +1,1 @@
+Mapa interactivo para calcular el vencedor de las elecciones presidenciales de Estados Unidos de 2024.
