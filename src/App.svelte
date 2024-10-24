@@ -2,8 +2,8 @@
   import * as topojson from "topojson-client";
   import estadosPreferencia from "$data/estadosPreferencia.js";
   import distritosPreferencia from "$data/distritosPreferencia.js";
-  import icon from "/refresh.svg";
-  import icon1 from "/info.svg";
+  import icon from "$data/refresh.svg";
+  import icon1 from "$data/info.svg";
   import {
     json,
     geoAlbersUsa,
