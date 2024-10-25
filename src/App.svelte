@@ -4,6 +4,8 @@
   import distritosPreferencia from "$data/distritosPreferencia.js";
   import icon from "./data/refresh.svg";
   import icon1 from "./data/info.svg";
+  import kamala from "./data/kamala.svg";
+  import trump from "./data/trump.svg";
   import {
     json,
     geoAlbersUsa,
@@ -67,7 +69,7 @@
         ".bola, .bola-grande, .bola-extra-grande",
       );
       balls.forEach((ball, ballIndex) => {
-        ball.style.backgroundColor = originalBallColors[block.id][ballIndex]; // Restaura el color original
+        ball.style.backgroundColor = originalBallColors[block.id][ballIndex];
       });
     });
   }
@@ -163,10 +165,7 @@ function toggleDistrictVotePreference(districtNumber) {
   let votesRepublicans = 0;
   let votesSwing = 0;
 
-  $: console.log(votesDemocrats)
-
   $: {
-  // Calcular votos de estados
   votesDemocrats = states.reduce((total, state) => 
     state.votePreference === "Democrat" ? total + (state.votes || 0) : total, 0
   );
@@ -179,7 +178,6 @@ function toggleDistrictVotePreference(districtNumber) {
     state.votePreference === "Swing" ? total + (state.votes || 0) : total, 0
   );
 
-  // Calcular votos de distritos
   votesDemocrats += distritosPreferencia.reduce((total, district) => 
     district.vote_preference === "Democrat" ? total + (district.votes || 0) : total, 0
   );
@@ -236,8 +234,12 @@ function toggleDistrictVotePreference(districtNumber) {
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <main bind:clientWidth={width}>
-<div style="display: flex; justify-content: center; margin-top: 10px; margin-bottom: 20px;">
-    <svg width={width * 0.9} height="40">
+<div style="display: flex; justify-content: center; margin-top: 20px; margin-bottom: 10px;">
+  <img
+  src={kamala}
+  alt="Kamala Harris"
+  style="height: 50px; position: relative; top: -18px; right: -2px;" />  
+  <svg width={width * 0.9} height="40">
         <rect 
             width={votesDemocrats / 538 * (width * 0.9)} 
             height="12" 
@@ -276,7 +278,7 @@ function toggleDistrictVotePreference(districtNumber) {
     </text>
         
         <text 
-            x="0" 
+            x="5" 
             y="28" 
             text-anchor="start" 
             fill="#1597D9"
@@ -286,7 +288,7 @@ function toggleDistrictVotePreference(districtNumber) {
         </text>
         
         <text 
-            x={(votesDemocrats + votesSwing + votesRepublicans) / 538 * (width * 0.9)} 
+            x={(votesDemocrats + votesSwing + votesRepublicans) / 538 * (width * 0.9) - 5} 
             y="28" 
             text-anchor="end" 
             font-weight="800"
@@ -295,8 +297,8 @@ function toggleDistrictVotePreference(districtNumber) {
             {votesRepublicans} Donald Trump 
         </text>
     </svg>
+    <img src={trump} alt="Donald Trump" style="height: 50px; position: relative; top: -20px; left: -3px" />
 </div>
-
   <button on:click={resetStates}>
     <img src={icon} alt="Icono" class="reset-icon" />
     Restablecer
@@ -541,12 +543,10 @@ function toggleDistrictVotePreference(districtNumber) {
 
 <style>
   main {
-    width: 95vw;
     max-width: 1500px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: relative;
   }
 
   .abreviaciones {
@@ -625,7 +625,7 @@ function toggleDistrictVotePreference(districtNumber) {
     font-weight: 500;
     max-width: 150px;
     word-wrap: break-word;
-    z-index: 1000; /* Asegura que el tooltip esté sobre otros elementos */
+    z-index: 1000;
     pointer-events: none;
     transform: translateY(-100%);
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
