@@ -238,43 +238,44 @@ function toggleDistrictVotePreference(districtNumber) {
   <img
   src={kamala}
   alt="Kamala Harris"
-  style="height: 50px; position: relative; top: -18px; right: -2px;" />  
-  <svg width={width * 0.9} height="40">
+  style="height: {width > 500 ? "50px" : "40px"}; position: relative; top: {width > 500 ? "-18px" : "-14px"}; right: -2px;"
+  class="candidate-icon" />  
+  <svg width={width * 0.8} height="40">
         <rect 
-            width={votesDemocrats / 538 * (width * 0.9)} 
+            width={votesDemocrats / 538 * (width * 0.8)} 
             height="12" 
             fill="#1597D9" 
         />
         
         <rect 
-            width={votesSwing / 538 * (width * 0.9)} 
+            width={votesSwing / 538 * (width * 0.8)} 
             height="12" 
             fill="#B3B3B3" 
-            x={votesDemocrats / 538 * (width * 0.9)} 
+            x={votesDemocrats / 538 * (width * 0.8)} 
         />
         
         <rect 
-            width={votesRepublicans / 538 * (width * 0.9)} 
+            width={votesRepublicans / 538 * (width * 0.8)} 
             height="12" 
             fill="#E6322E" 
-            x={(votesDemocrats + votesSwing) / 538 * (width * 0.9)} 
+            x={(votesDemocrats + votesSwing) / 538 * (width * 0.8)} 
         />
 
         <polygon 
-            points={`${(270 / 538) * (width * 0.9)}, 15 
-                     ${(270 / 538) * (width * 0.9) - 5}, 20 
-                     ${(270 / 538) * (width * 0.9) + 5}, 20`}
+            points={`${(270 / 538) * (width * 0.8)}, 15 
+                     ${(270 / 538) * (width * 0.8) - 5}, 20 
+                     ${(270 / 538) * (width * 0.8) + 5}, 20`}
             fill="black" 
         />
 
         <text 
-        x={(270 / 538) * (width * 0.9)} 
+        x={(270 / 538) * (width * 0.8)} 
         y="35" 
         text-anchor="middle" 
         fill="black" 
         font-size="0.8em"
         font-style="italic">
-        Mayoría: 270
+        {width > 500 ? "Mayoría: 270" : "270"}
     </text>
         
         <text 
@@ -288,7 +289,7 @@ function toggleDistrictVotePreference(districtNumber) {
         </text>
         
         <text 
-            x={(votesDemocrats + votesSwing + votesRepublicans) / 538 * (width * 0.9) - 5} 
+            x={(votesDemocrats + votesSwing + votesRepublicans) / 538 * (width * 0.8) - 5} 
             y="28" 
             text-anchor="end" 
             font-weight="800"
@@ -297,7 +298,7 @@ function toggleDistrictVotePreference(districtNumber) {
             {votesRepublicans} Donald Trump 
         </text>
     </svg>
-    <img src={trump} alt="Donald Trump" style="height: 50px; position: relative; top: -20px; left: -3px" />
+    <img src={trump} class="candidate-icon" alt="Donald Trump" style="height: {width > 500 ? "50px" : "40px"}; position: relative; top: {width > 500 ? "-18px" : "-14px"}; left: -3px" />
 </div>
   <button on:click={resetStates}>
     <img src={icon} alt="Icono" class="reset-icon" />
@@ -331,7 +332,7 @@ function toggleDistrictVotePreference(districtNumber) {
               : state.abbreviation === "Flo."
                 ? state.centroid[0] + 12
                 : state.abbreviation === "Hawái"
-                  ? state.centroid[0] - 30
+                  ? state.centroid[0] - 35
                   : state.abbreviation === "Mích."
                     ? state.centroid[0] + 5
                     : state.centroid[0]}
@@ -356,7 +357,7 @@ function toggleDistrictVotePreference(districtNumber) {
               : state.abbreviation === "Flo."
                 ? state.centroid[0] + 12
                 : state.abbreviation === "Hawái"
-                  ? state.centroid[0] - 32
+                  ? state.centroid[0] - 35
                   : state.abbreviation === "Mích."
                     ? state.centroid[0] + 5
                     : state.centroid[0]}
