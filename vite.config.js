@@ -5,9 +5,9 @@ import path from 'path'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [svelte()],
+  base: '/docs/',
   build: {
-    outDir: './docs', // relative to index.html
-    // emptyOutDir: true, // true if outDir is inside root. if outDir is not inside root, uncomment this.
+    outDir: './docs',
   },
   resolve: {
     alias: {
