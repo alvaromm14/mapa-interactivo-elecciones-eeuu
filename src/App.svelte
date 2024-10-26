@@ -54,23 +54,53 @@
     states = [...initialStates];
   }
 
-  let originalBallColors = {
-    nebraska: ["#E6322E", "#1597D9", "#E6322E"],
-    maine: ["#1597D9", "#E6322E"],
-    dc: ["#1597D9"],
-  };
+  function getColorByVotePreference(preference) {
+    switch (preference) {
+      case "Republican":
+        return "#E6322E";
+      case "Democrat":
+        return "#1597D9";
+      case "Swing":
+        return "#B3B3B3";
+      default:
+        return "#B3B3B3";
+    }
+  }
 
+  const initialEstadosPreferencia = JSON.parse(
+    JSON.stringify(estadosPreferencia),
+  );
+  const initialDistritosPreferencia = JSON.parse(
+    JSON.stringify(distritosPreferencia),
+  );
+  
+  
   function resetStates() {
-    states = [...initialStates];
+    estadosPreferencia.forEach((state, index) => {
+      estadosPreferencia[index] = { ...initialEstadosPreferencia[index] };
+    });
 
-    const infoBlocks = document.querySelectorAll(".info-block");
-    infoBlocks.forEach((block, index) => {
-      const balls = block.querySelectorAll(
-        ".bola, .bola-grande, .bola-extra-grande",
+    distritosPreferencia.forEach((district, index) => {
+      distritosPreferencia[index] = { ...initialDistritosPreferencia[index] }; // Restablecer distritosPreferencia
+    });
+
+    states = geojson.features.map((feature) => {
+      const stateData = estadosPreferencia.find(
+        (state) => state.id === feature.id,
       );
-      balls.forEach((ball, ballIndex) => {
-        ball.style.backgroundColor = originalBallColors[block.id][ballIndex];
-      });
+      const abbreviation = stateData ? stateData.abbreviation : "N/A";
+      const votePreference = stateData ? stateData.vote_preference : "N/A";
+      const votes = stateData ? stateData.votes : "N/A";
+      const centroid = pathGenerator.centroid(feature);
+
+      return {
+        ...feature,
+        path: pathGenerator(feature),
+        centroid: centroid,
+        abbreviation: stateData.abbreviation,
+        votePreference: stateData.vote_preference,
+        votes: stateData.votes,
+      };
     });
   }
 
@@ -98,48 +128,70 @@
   }
 
   function recalcularVotos() {
-  votesDemocrats = states.reduce((total, state) =>
-    state.votePreference === "Democrat" ? total + (state.votes || 0) : total, 0
-  );
+    votesDemocrats = states.reduce(
+      (total, state) =>
+        state.votePreference === "Democrat"
+          ? total + (state.votes || 0)
+          : total,
+      0,
+    );
 
-  votesRepublicans = states.reduce((total, state) =>
-    state.votePreference === "Republican" ? total + (state.votes || 0) : total, 0
-  );
+    votesRepublicans = states.reduce(
+      (total, state) =>
+        state.votePreference === "Republican"
+          ? total + (state.votes || 0)
+          : total,
+      0,
+    );
 
-  votesSwing = states.reduce((total, state) =>
-    state.votePreference === "Swing" ? total + (state.votes || 0) : total, 0
-  );
+    votesSwing = states.reduce(
+      (total, state) =>
+        state.votePreference === "Swing" ? total + (state.votes || 0) : total,
+      0,
+    );
 
-  votesDemocrats += distritosPreferencia.reduce((total, district) =>
-    district.vote_preference === "Democrat" ? total + (district.votes || 0) : total, 0
-  );
+    votesDemocrats += distritosPreferencia.reduce(
+      (total, district) =>
+        district.vote_preference === "Democrat"
+          ? total + (district.votes || 0)
+          : total,
+      0,
+    );
 
-  votesRepublicans += distritosPreferencia.reduce((total, district) =>
-    district.vote_preference === "Republican" ? total + (district.votes || 0) : total, 0
-  );
+    votesRepublicans += distritosPreferencia.reduce(
+      (total, district) =>
+        district.vote_preference === "Republican"
+          ? total + (district.votes || 0)
+          : total,
+      0,
+    );
 
-  votesSwing += distritosPreferencia.reduce((total, district) =>
-    district.vote_preference === "Swing" ? total + (district.votes || 0) : total, 0
-  );
-}
-function toggleDistrictVotePreference(districtNumber) {
-  const districtData = distritosPreferencia.find(
-    (district) => district.number === districtNumber
-  );
-
-  if (districtData) {
-    districtData.vote_preference =
-      districtData.vote_preference === "Republican"
-        ? "Swing"
-        : districtData.vote_preference === "Democrat"
-          ? "Republican"
-          : districtData.vote_preference === "Swing"
-            ? "Democrat"
-            : "Democrat";
+    votesSwing += distritosPreferencia.reduce(
+      (total, district) =>
+        district.vote_preference === "Swing"
+          ? total + (district.votes || 0)
+          : total,
+      0,
+    );
   }
+  function toggleDistrictVotePreference(districtNumber) {
+    const districtData = distritosPreferencia.find(
+      (district) => district.number === districtNumber,
+    );
 
-  $: recalcularVotos();
-}
+    if (districtData) {
+      districtData.vote_preference =
+        districtData.vote_preference === "Republican"
+          ? "Swing"
+          : districtData.vote_preference === "Democrat"
+            ? "Republican"
+            : districtData.vote_preference === "Swing"
+              ? "Democrat"
+              : "Democrat";
+    }
+
+    $: recalcularVotos();
+  }
 
   let tooltipText = "";
   let tooltipVisible = false;
@@ -152,7 +204,7 @@ function toggleDistrictVotePreference(districtNumber) {
     const iconRect = icon.getBoundingClientRect();
 
     tooltipPosition = {
-      top: iconRect.top,
+      top: iconRect.top + window.scrollY,
       left: iconRect.left,
     };
   }
@@ -166,30 +218,52 @@ function toggleDistrictVotePreference(districtNumber) {
   let votesSwing = 0;
 
   $: {
-  votesDemocrats = states.reduce((total, state) => 
-    state.votePreference === "Democrat" ? total + (state.votes || 0) : total, 0
-  );
+    votesDemocrats = states.reduce(
+      (total, state) =>
+        state.votePreference === "Democrat"
+          ? total + (state.votes || 0)
+          : total,
+      0,
+    );
 
-  votesRepublicans = states.reduce((total, state) => 
-    state.votePreference === "Republican" ? total + (state.votes || 0) : total, 0
-  );
+    votesRepublicans = states.reduce(
+      (total, state) =>
+        state.votePreference === "Republican"
+          ? total + (state.votes || 0)
+          : total,
+      0,
+    );
 
-  votesSwing = states.reduce((total, state) => 
-    state.votePreference === "Swing" ? total + (state.votes || 0) : total, 0
-  );
+    votesSwing = states.reduce(
+      (total, state) =>
+        state.votePreference === "Swing" ? total + (state.votes || 0) : total,
+      0,
+    );
 
-  votesDemocrats += distritosPreferencia.reduce((total, district) => 
-    district.vote_preference === "Democrat" ? total + (district.votes || 0) : total, 0
-  );
+    votesDemocrats += distritosPreferencia.reduce(
+      (total, district) =>
+        district.vote_preference === "Democrat"
+          ? total + (district.votes || 0)
+          : total,
+      0,
+    );
 
-  votesRepublicans += distritosPreferencia.reduce((total, district) => 
-    district.vote_preference === "Republican" ? total + (district.votes || 0) : total, 0
-  );
+    votesRepublicans += distritosPreferencia.reduce(
+      (total, district) =>
+        district.vote_preference === "Republican"
+          ? total + (district.votes || 0)
+          : total,
+      0,
+    );
 
-  votesSwing += distritosPreferencia.reduce((total, district) => 
-    district.vote_preference === "Swing" ? total + (district.votes || 0) : total, 0
-  );
-}
+    votesSwing += distritosPreferencia.reduce(
+      (total, district) =>
+        district.vote_preference === "Swing"
+          ? total + (district.votes || 0)
+          : total,
+      0,
+    );
+  }
 
   window.addEventListener("DOMContentLoaded", (event) => {
     function updateIframeHeight() {
@@ -229,77 +303,99 @@ function toggleDistrictVotePreference(districtNumber) {
       false,
     );
   });
-
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <main bind:clientWidth={width}>
-<div style="display: flex; justify-content: center; margin-top: 20px; margin-bottom: 10px;">
-  <img
-  src={kamala}
-  alt="Kamala Harris"
-  style="height: {width > 500 ? "50px" : "40px"}; position: relative; top: {width > 500 ? "-18px" : "-14px"}; right: -2px;"
-  class="candidate-icon" />  
-  <svg width={width * 0.8} height="40">
-        <rect 
-            width={votesDemocrats / 538 * (width * 0.8)} 
-            height="12" 
-            fill="#1597D9" 
-        />
-        
-        <rect 
-            width={votesSwing / 538 * (width * 0.8)} 
-            height="12" 
-            fill="#B3B3B3" 
-            x={votesDemocrats / 538 * (width * 0.8)} 
-        />
-        
-        <rect 
-            width={votesRepublicans / 538 * (width * 0.8)} 
-            height="12" 
-            fill="#E6322E" 
-            x={(votesDemocrats + votesSwing) / 538 * (width * 0.8)} 
-        />
+  <div
+    style="display: flex; justify-content: center; margin-top: 20px; margin-bottom: 10px;"
+  >
+    <img
+      src={kamala}
+      alt="Kamala Harris"
+      style="height: {width > 500
+        ? '50px'
+        : '40px'}; position: relative; top: {width > 500
+        ? '-18px'
+        : '-14px'}; right: -2px;"
+      class="candidate-icon"
+    />
+    <svg width={width * 0.8} height="40">
+      <rect
+        width={(votesDemocrats / 538) * (width * 0.8)}
+        height="12"
+        fill="#1597D9"
+      />
 
-        <polygon 
-            points={`${(270 / 538) * (width * 0.8)}, 15 
+      <rect
+        width={(votesSwing / 538) * (width * 0.8)}
+        height="12"
+        fill="#B3B3B3"
+        x={(votesDemocrats / 538) * (width * 0.8)}
+      />
+
+      <rect
+        width={(votesRepublicans / 538) * (width * 0.8)}
+        height="12"
+        fill="#E6322E"
+        x={((votesDemocrats + votesSwing) / 538) * (width * 0.8)}
+      />
+
+      <polygon
+        points={`${(270 / 538) * (width * 0.8)}, 15 
                      ${(270 / 538) * (width * 0.8) - 5}, 20 
                      ${(270 / 538) * (width * 0.8) + 5}, 20`}
-            fill="black" 
-        />
+        fill="black"
+      />
 
-        <text 
-        x={(270 / 538) * (width * 0.8)} 
-        y="35" 
-        text-anchor="middle" 
-        fill="black" 
+      <text
+        x={(270 / 538) * (width * 0.8)}
+        y="35"
+        text-anchor="middle"
+        fill="black"
         font-size="0.8em"
-        font-style="italic">
+        font-style="italic"
+      >
         {width > 500 ? "Mayoría: 270" : "270"}
-    </text>
-        
-        <text 
-            x="5" 
-            y="28" 
-            text-anchor="start" 
-            fill="#1597D9"
-            font-weight="800"
-            font-size={votesDemocrats > 269 ? "1em" : "0.85em"}>
-            Kamala Harris {votesDemocrats}
-        </text>
-        
-        <text 
-            x={(votesDemocrats + votesSwing + votesRepublicans) / 538 * (width * 0.8) - 5} 
-            y="28" 
-            text-anchor="end" 
-            font-weight="800"
-            fill="#E6322E" 
-            font-size={votesRepublicans > 269 ? "1em" : "0.85em"}>
-            {votesRepublicans} Donald Trump 
-        </text>
+      </text>
+
+      <text
+        x="5"
+        y="28"
+        text-anchor="start"
+        fill="#1597D9"
+        font-weight="800"
+        font-size={votesDemocrats > 269 ? "1em" : "0.85em"}
+      >
+        {width > 500 ? "Kamala Harris " : "K. Harris "}
+        {votesDemocrats}
+      </text>
+
+      <text
+        x={((votesDemocrats + votesSwing + votesRepublicans) / 538) *
+          (width * 0.8) -
+          5}
+        y="28"
+        text-anchor="end"
+        font-weight="800"
+        fill="#E6322E"
+        font-size={votesRepublicans > 269 ? "1em" : "0.85em"}
+      >
+        {votesRepublicans}
+        {width > 500 ? " Donald Trump" : " D. Trump"}
+      </text>
     </svg>
-    <img src={trump} class="candidate-icon" alt="Donald Trump" style="height: {width > 500 ? "50px" : "40px"}; position: relative; top: {width > 500 ? "-18px" : "-14px"}; left: -3px" />
-</div>
+    <img
+      src={trump}
+      class="candidate-icon"
+      alt="Donald Trump"
+      style="height: {width > 500
+        ? '50px'
+        : '40px'}; position: relative; top: {width > 500
+        ? '-18px'
+        : '-14px'}; left: -3px"
+    />
+  </div>
   <button on:click={resetStates}>
     <img src={icon} alt="Icono" class="reset-icon" />
     Restablecer
@@ -411,12 +507,12 @@ function toggleDistrictVotePreference(districtNumber) {
       <div class="bolitas">
         <span
           class="bola"
-          style="background-color: #E6322E;"
+          style="background-color: {getColorByVotePreference(distritosPreferencia.find(d => d.number === 'N02').vote_preference)};"
           on:click={(e) => {
             e.currentTarget.style.backgroundColor =
               e.currentTarget.style.backgroundColor === "rgb(179, 179, 179)"
-                ? "rgb(20, 142, 204)"
-                : e.currentTarget.style.backgroundColor === "rgb(20, 142, 204)"
+                ? "rgb(21, 151, 217)"
+                : e.currentTarget.style.backgroundColor === "rgb(21, 151, 217)"
                   ? "#E6322E"
                   : "#B3B3B3";
 
@@ -425,12 +521,12 @@ function toggleDistrictVotePreference(districtNumber) {
         >
         <span
           class="bola"
-          style="background-color: #148ecc;"
+          style="background-color: {getColorByVotePreference(distritosPreferencia.find(d => d.number === 'N03').vote_preference)};"
           on:click={(e) => {
             e.currentTarget.style.backgroundColor =
               e.currentTarget.style.backgroundColor === "rgb(179, 179, 179)"
-                ? "rgb(20, 142, 204)"
-                : e.currentTarget.style.backgroundColor === "rgb(20, 142, 204)"
+                ? "rgb(21, 151, 217)"
+                : e.currentTarget.style.backgroundColor === "rgb(21, 151, 217)"
                   ? "#E6322E"
                   : "#B3B3B3";
 
@@ -439,16 +535,16 @@ function toggleDistrictVotePreference(districtNumber) {
         >
         <span
           class="bola"
-          style="background-color: #E6322E;"
+          style="background-color: {getColorByVotePreference(distritosPreferencia.find(d => d.number === 'N04').vote_preference)};"
           on:click={(e) => {
             e.currentTarget.style.backgroundColor =
               e.currentTarget.style.backgroundColor === "rgb(179, 179, 179)"
-                ? "rgb(20, 142, 204)"
-                : e.currentTarget.style.backgroundColor === "rgb(20, 142, 204)"
+                ? "rgb(21, 151, 217)"
+                : e.currentTarget.style.backgroundColor === "rgb(21, 151, 217)"
                   ? "#E6322E"
                   : "#B3B3B3";
 
-          toggleDistrictVotePreference("N04");
+            toggleDistrictVotePreference("N04");
           }}>1</span
         >
       </div>
@@ -471,12 +567,12 @@ function toggleDistrictVotePreference(districtNumber) {
       <div class="bolitas">
         <span
           class="bola"
-          style="background-color: #148ecc;"
+          style="background-color: {getColorByVotePreference(distritosPreferencia.find(d => d.number === 'M02').vote_preference)};"
           on:click={(e) => {
             e.currentTarget.style.backgroundColor =
               e.currentTarget.style.backgroundColor === "rgb(179, 179, 179)"
-                ? "rgb(20, 142, 204)"
-                : e.currentTarget.style.backgroundColor === "rgb(20, 142, 204)"
+                ? "rgb(21, 151, 217)"
+                : e.currentTarget.style.backgroundColor === "rgb(21, 151, 217)"
                   ? "#E6322E"
                   : "#B3B3B3";
 
@@ -485,12 +581,12 @@ function toggleDistrictVotePreference(districtNumber) {
         >
         <span
           class="bola"
-          style="background-color: #E6322E;"
+          style="background-color: {getColorByVotePreference(distritosPreferencia.find(d => d.number === 'M03').vote_preference)};"
           on:click={(e) => {
             e.currentTarget.style.backgroundColor =
               e.currentTarget.style.backgroundColor === "rgb(179, 179, 179)"
-                ? "rgb(20, 142, 204)"
-                : e.currentTarget.style.backgroundColor === "rgb(20, 142, 204)"
+                ? "rgb(21, 151, 217)"
+                : e.currentTarget.style.backgroundColor === "rgb(21, 151, 217)"
                   ? "#E6322E"
                   : "#B3B3B3";
 
@@ -517,15 +613,15 @@ function toggleDistrictVotePreference(districtNumber) {
       <div class="bolitas">
         <span
           class="bola-extra-grande"
-          style="background-color: #148ecc;"
+          style="background-color: {getColorByVotePreference(distritosPreferencia.find(d => d.number === 'W01').vote_preference)};"
           on:click={(e) => {
             e.currentTarget.style.backgroundColor =
               e.currentTarget.style.backgroundColor === "rgb(179, 179, 179)"
-                ? "rgb(20, 142, 204)"
-                : e.currentTarget.style.backgroundColor === "rgb(20, 142, 204)"
+                ? "rgb(21, 151, 217)"
+                : e.currentTarget.style.backgroundColor === "rgb(21, 151, 217)"
                   ? "rgb(230, 50, 46)"
                   : "#B3B3B3";
-                  
+
             toggleDistrictVotePreference("W01");
           }}>3</span
         >
@@ -591,7 +687,6 @@ function toggleDistrictVotePreference(districtNumber) {
     font-size: 0.8em;
     display: flex;
     align-items: center;
-    
   }
 
   button:hover {
@@ -649,9 +744,6 @@ function toggleDistrictVotePreference(districtNumber) {
     gap: 4px;
     text-align: center;
     font-size: 10px;
-    align-items: end;
-    color: white;
-    text-anchor: start;
   }
 
   .bola,
@@ -686,5 +778,4 @@ function toggleDistrictVotePreference(districtNumber) {
     align-items: center;
     margin: 0 0 5px;
   }
-
 </style>
