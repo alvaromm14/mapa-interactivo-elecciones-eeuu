@@ -198,7 +198,7 @@ export default [
   {
     "id": "33",
     "name": "Nuevo Hampshire",
-    "abbreviation": "NV",
+    "abbreviation": "NH",
     "vote_preference": "Democrat",
     "votes": 4
   },
